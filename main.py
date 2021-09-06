@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 st.title('顔認識アプリ')
 
-with open('.env') as f:
+with open('secret.face.json') as f:
     secret_json = json.load(f)
 
 subscription_key = secret_json["SUBSCRIPTION_KEY"]
@@ -53,4 +53,3 @@ if uploaded_file is not None:
       draw.text((60+rect['left'], 40+rect['top']+rect['height']),str(smile), font=font,fill='#008000')
 
   st.image(img, caption='Uploaded Image.', use_column_width=True)
-
