@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 st.title('顔認識アプリ')
-
+st.write("DB username:", st.secrets["db_username"])
 
 
 subscription_key ="SUBSCRIPTION_KEY"
