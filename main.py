@@ -1,87 +1,56 @@
+import streamlit as st
 import io
 import requests
-import streamlit as st
-from PIL import Image
-from PIL import ImageDraw
-from PIL import ImageFont
+import json
+from PIL import Image, ImageDraw, ImageFont
 
-st.title('顔認証アプリ')
+st.title('顔認識アプリ')
 
-subscription_key = '.env' # AzureのAPIキー
-endpoint = 'https://20210813spiderkame.cognitiveservices.azure.com/'         # AzureのAPIエンドポイント
-face_api_url = endpoint + 'face/v1.0/detect'
-headers = {
-    'Content-Type': 'application/octet-stream',
-    'Ocp-Apim-Subscription-Key': subscription_key
-}
-params = {
-    'returnFaceId': 'true',
-    'returnFaceAttributes': 'age,gender',
-}
+with open('.env') as f:
+    secret_json = json.load(f)
 
-# 検出した顔に描く長方形の座標を取得
-def get_rectangle(faceDictionary):
-    rect = faceDictionary['faceRectangle']
-    left = rect['left']
-    top = rect['top']
-    right = left + rect['width']
-    bottom = top + rect['height']
+subscription_key = secret_json["SUBSCRIPTION_KEY"]
+assert subscription_key
 
-    return ((left, top), (right, bottom))
+face_api_url = 'https://20210813spiderkame.cognitiveservices.azure.com/face/v1.0/detect'
 
 
-# 描画するテキストを取得
-def get_draw_text(faceDictionary):
-    rect = faceDictionary['faceRectangle']
-    faceAttr = faceDictionary['faceAttributes']
-    age = int(faceAttr['age'])
-    gender = faceAttr['gender']
-    text = f'{gender} {age}'
-
-    # 枠に合わせてフォントサイズを調整
-    font_size = max(16, int(rect['width'] / len(text)))
-    font = ImageFont.truetype(r'C:\windows\fonts\meiryo.ttc', font_size)
-
-    return (text, font)
-
-
-# 認識された顔の上にテキストを描く座標を取得
-def get_text_rectangle(faceDictionary, text, font):
-    rect = faceDictionary['faceRectangle']
-    text_width, text_height = font.getsize(text)
-    left = rect['left'] + rect['width'] / 2 - text_width / 2
-    top = rect['top'] - text_height - 1
-
-    return (left, top)
-
-
-# テキストを描画
-def draw_text(faceDictionary):
-    text, font = get_draw_text(faceDictionary)
-    text_rect = get_text_rectangle(faceDictionary, text, font)
-    draw.text(text_rect, text, align='center', font=font, fill='red')
-
-
-uploaded_file = st.file_uploader("Choose an image...", type="jpg")
-
+uploaded_file = st.file_uploader("Choose an image...", type='jpg')
 if uploaded_file is not None:
-    img = Image.open(uploaded_file)
+  img = Image.open(uploaded_file)
+  with io.BytesIO() as output:
+      img.save(output, format="JPEG")
+      binary_img = output.getvalue()
+  headers = {
+      'Content-Type': 'application/octet-stream',
+      'Ocp-Apim-Subscription-Key': subscription_key
+  }
+  params = {
+      'returnFaceId': 'true',
+      'returnFaceLandmarks': 'false',
+      'returnFaceAttributes': 'age,gender,headPose,smile,facialHair,glasses,emotion,hair,makeup,occlusion,accessories,blur,exposure,noise',
+  }
 
-    with io.BytesIO() as output:
-        img.save(output, format='JPEG')
-        binary_img = output.getvalue()
+  res= requests.post(face_api_url, params=params, headers=headers, data=binary_img)
+  results = res.json()
 
-    res = requests.post(face_api_url, params=params,
-                        headers=headers, data=binary_img)
-    results = res.json()
+  for result in results:
+      rect = result['faceRectangle']
+    
+      at_rect = result['faceAttributes']
+      gender = at_rect['gender']
+      age = at_rect['age']
+      smile = at_rect['smile']
+      font = ImageFont.truetype('NikkyouSans-mLKax.ttf', 15)
+        
+      draw = ImageDraw.Draw(img)
+      draw.rectangle([(rect['left'], rect['top']), (rect['left']+rect['width'],rect['top']+rect['height'])], fill=None, outline='green', width=5)
+      draw.text((70+rect['left'], 10+rect['top']+rect['height']),gender, font=font,fill='#008000')
+      draw.text((rect['left'], 10+rect['top']+rect['height']),'gender:', font=font,fill='#008000')
+      draw.text((60+rect['left'], 25+rect['top']+rect['height']),str(age), font=font,fill='#008000')
+      draw.text((rect['left'], 25+rect['top']+rect['height']),'age:', font=font,fill='#008000')
+      draw.text((rect['left'], 40+rect['top']+rect['height']),'smile:', font=font,fill='#008000')
+      draw.text((60+rect['left'], 40+rect['top']+rect['height']),str(smile), font=font,fill='#008000')
 
-    if not results:
-        raise Exception('画像から顔を検出できませんでした。')
+  st.image(img, caption='Uploaded Image.', use_column_width=True)
 
-    for result in results:
-        draw = ImageDraw.Draw(img)
-        draw.rectangle(get_rectangle(result), outline='green', width=3)
-
-        draw_text(result)
-
-    st.image(img, caption='Uploaded Image.', use_column_width=True)
