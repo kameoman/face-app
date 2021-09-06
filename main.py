@@ -9,7 +9,7 @@ st.title('顔認識アプリ')
 
 
 
-subscription_key = "SUBSCRIPTION_KEY"
+subscription_key =["SUBSCRIPTION_KEY"]
 assert subscription_key
 
 face_api_url = 'https://20210813spiderkame.cognitiveservices.azure.com/face/v1.0/detect'
