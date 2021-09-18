@@ -33,7 +33,7 @@ if uploaded_file is not None:
   results = res.json()
 
   for result in results:
-      rect = result['faceRectangle']
+    #   at_rect = result['faceRectangle']
     
       at_rect = result['faceAttributes']
       gender = at_rect['gender']
@@ -42,12 +42,12 @@ if uploaded_file is not None:
       font = ImageFont.truetype('NikkyouSans-mLKax.ttf', 15)
         
       draw = ImageDraw.Draw(img)
-      draw.rectangle([(rect['left'], rect['top']), (rect['left']+rect['width'],rect['top']+rect['height'])], fill=None, outline='green', width=5)
-      draw.text((70+rect['left'], 10+rect['top']+rect['height']),gender, font=font,fill='#008000')
-      draw.text((rect['left'], 10+rect['top']+rect['height']),'gender:', font=font,fill='#008000')
-      draw.text((60+rect['left'], 25+rect['top']+rect['height']),str(age), font=font,fill='#008000')
-      draw.text((rect['left'], 25+rect['top']+rect['height']),'age:', font=font,fill='#008000')
-      draw.text((rect['left'], 40+rect['top']+rect['height']),'smile:', font=font,fill='#008000')
-      draw.text((60+rect['left'], 40+rect['top']+rect['height']),str(smile), font=font,fill='#008000')
+      draw.rectangle([(at_rect['left'], at_rect['top']), (at_rect['left']+at_rect['width'],at_rect['top']+at_rect['height'])], fill=None, outline='green', width=5)
+      draw.text((70+at_rect['left'], 10+at_rect['top']+at_rect['height']),gender, font=font,fill='#008000')
+      draw.text((at_rect['left'], 10+at_rect['top']+at_rect['height']),'gender:', font=font,fill='#008000')
+      draw.text((60+at_rect['left'], 25+at_rect['top']+at_rect['height']),str(age), font=font,fill='#008000')
+      draw.text((at_rect['left'], 25+at_rect['top']+at_rect['height']),'age:', font=font,fill='#008000')
+      draw.text((at_rect['left'], 40+at_rect['top']+at_rect['height']),'smile:', font=font,fill='#008000')
+      draw.text((60+at_rect['left'], 40+at_rect['top']+at_rect['height']),str(smile), font=font,fill='#008000')
 
   st.image(img, caption='Uploaded Image.', use_column_width=True)
